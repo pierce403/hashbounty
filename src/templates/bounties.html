@@ -1,0 +1,30 @@
+{% from "_formhelpers.html" import render_field %}
+
+<div style="float: left; margin-right: 20px;">
+<form method="post" action="">
+  <dl>
+    {{ render_field(form.type) }}
+    {{ render_field(form.hash) }}
+    {{ render_field(form.email) }}
+    {{ render_field(form.bounty) }}
+    {{ render_field(form.address) }}
+  </dl>
+  <p><input type="submit" value="Add bounty">
+</form>
+
+</div>
+
+<h2>Bounties</h2>
+
+{% for bounty in bounties %}
+
+  <a href="{{ url_for('bounty', key_name=bounty.key().name() or '') }}">{{ bounty.hash }}<a/>
+  {% if bounty.solved %}
+  [SOLVED]
+  {% else %}
+  {{ bounty.bounty }} BTC
+  {% endif %}
+
+  <br />
+
+{% endfor %}

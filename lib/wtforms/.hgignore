@@ -1,0 +1,12 @@
+syntax: regexp
+\.py[co]$
+\.py,cover$
+\..*\.swp$
+\.eprj$
+\.coverage$
+\.DS_Store$
+^build/
+^docs/_build
+^docs/html
+^dist/
+^MANIFEST$

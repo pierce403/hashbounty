@@ -1,0 +1,16 @@
+{% from "_formhelpers.html" import render_field %}
+
+<div style="float: left; margin-right: 20px;">
+
+<h2>Bounty: "{{ bounty.hash }}" for {{ bounty.bounty }} BTC</h2>
+
+<form method="post" action="">
+  <dl>
+    {{ render_field(form.text) }}
+    {{ render_field(form.address) }}
+  </dl>
+  <p><input type="submit" value="Submit solution">
+</form>
+
+</div>
+
