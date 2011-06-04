@@ -1,0 +1,19 @@
+{% macro bounty_submitted(bounty) -%}
+Hello.  You have submitted {{ bounty.hash }}.  The donation address for this hash is at {{ bounty.address }}.  Before your hash will listed, you must send a bounty to this address.
+{%- endmacro  %}
+
+{% macro bounty_submitted_subject(bounty) -%}
+Bounty submitted!
+{%- endmacro  %}
+
+
+
+{% macro bounty_solved(bounty) -%}
+Your hash '{{ bounty.hash }}' has been solved!  The solution was '{{ bounty.solution }}'.
+Thank you for using hashbounty!
+{%- endmacro  %}
+
+{% macro bounty_solved_subject(bounty) -%}
+Bounty solved!
+{%- endmacro  %}
+

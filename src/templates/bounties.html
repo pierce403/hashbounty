@@ -1,4 +1,8 @@
+{% extends 'base.html' %}
+
 {% from "_formhelpers.html" import render_field %}
+
+{% block body %}
 
 <div style="float: left; margin-right: 20px;">
 <form method="post" action="">
@@ -7,25 +11,33 @@
     {{ render_field(form.hash) }}
     {{ render_field(form.email) }}
     {{ render_field(form.bounty) }}
-    {{ render_field(form.address) }}
   </dl>
   <p><input type="submit" value="Add bounty">
 </form>
+
+Please note,
+<br/>
+this is <b>alpha</b> code and
+<br/>
+still a work-in-progress...
 
 </div>
 
 <h2>Bounties</h2>
 
-{% for bounty in bounties %}
+{% for bounty in bounties if not bounty.solved %}
 
-  <a href="{{ url_for('bounty', key_name=bounty.key().name() or '') }}">{{ bounty.hash }}<a/>
+  {{ bounty.hash }}
   {% if bounty.solved %}
   [SOLVED]
   {% else %}
   {{ bounty.bounty }} BTC
   {% endif %}
+  
+  <a href="{{ url_for('bounty', key_name=bounty.key().name() or '') }}">submit solution<a/>
 
   <br />
 
 {% endfor %}
 
+{% endblock %}
