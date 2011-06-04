@@ -1,0 +1,9 @@
+[submodule "lib/flask"]
+	path = lib/flask
+	url = https://github.com/mitsuhiko/flask.git
+[submodule "lib/jinja2"]
+	path = lib/jinja2
+	url = https://github.com/mitsuhiko/jinja2.git
+[submodule "lib/werkzeug"]
+	path = lib/werkzeug
+	url = https://github.com/mitsuhiko/werkzeug.git
