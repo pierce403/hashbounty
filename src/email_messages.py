@@ -14,7 +14,7 @@ def send_message(address, macro_name, **kwargs):
         subject = "Notification"
     
     # send mail
-    mail.send_mail(sender="HashBounty <noreply@example.com>",
+    mail.send_mail(sender="HashBounty <noreply@hashbounty.appspotmail.com>",
               to=address,
               subject=subject,
               body=body)

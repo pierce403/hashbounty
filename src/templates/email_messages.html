@@ -1,5 +1,9 @@
 {% macro bounty_submitted(bounty) -%}
-Hello.  You have submitted {{ bounty.hash }}.  The donation address for this hash is at {{ bounty.address }}.  Before your hash will listed, you must send a bounty to this address.
+Hello.
+
+You have submitted {{ bounty.hash }}.
+The donation address for this hash is at {{ bounty.address }}.
+Before your hash will be listed, you must send a bounty to this address.
 {%- endmacro  %}
 
 {% macro bounty_submitted_subject(bounty) -%}
@@ -15,5 +19,19 @@ Thank you for using hashbounty!
 
 {% macro bounty_solved_subject(bounty) -%}
 Bounty solved!
+{%- endmacro  %}
+
+
+{% macro bitcoins_received(bounty, amount=0) -%}
+Your hash '{{ bounty.hash }}' has received {{ amount }} BTC. The total bounty is {{ bounty.bounty }} BTC.
+{%- if not bounty.active -%}
+  You still need to send {{ bounty.bounty - bounty.budget }} BTC.
+{%- else -%}
+  Thank you.
+{%- endif -%}
+{%- endmacro  %}
+
+{% macro bitcoins_received_subject(bounty, amount=0) -%}
+Bitcoins received!
 {%- endmacro  %}
 

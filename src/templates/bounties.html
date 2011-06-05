@@ -34,7 +34,7 @@ still a work-in-progress...
   {{ bounty.bounty }} BTC
   {% endif %}
   
-  <a href="{{ url_for('bounty', key_name=bounty.key().name() or '') }}">submit solution<a/>
+  <a href="{{ url_for('bounty', id=bounty.key().id()) }}">submit solution<a/>
 
   <br />
 

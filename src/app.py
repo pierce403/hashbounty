@@ -1,3 +1,7 @@
+import logging, time
+
+from google.appengine.api import taskqueue
+
 import settings
 
 from flask import Flask
@@ -6,6 +10,8 @@ app = Flask(__name__)
 from flask import url_for, redirect, make_response, render_template, abort, request, flash
 
 from email_messages import send_message
+import btc
+
 
 # --views
 @app.route('/')
@@ -16,35 +22,60 @@ def main():
 def bounties():
     form = BountyForm(request.form)
     if request.method == 'POST' and form.validate():
-        b = Bounty(
-          key_name=form.hash.data,
-          type=form.type.data,
-          hash=form.hash.data,
-          email=form.email.data,
-          bounty=form.bounty.data,
-        )
+        b = Bounty.from_form(form)
         b.put()
         send_message(b.email, "bounty_submitted", bounty=b)
         return redirect(url_for('bounties'))
    
-    bounties = Bounty.all().order('-ctime').fetch(1000)
+    bounties = Bounty.all().filter('active =', True).order(
+      '-ctime').fetch(1000)
     
     return render_template('bounties.html', form=form, bounties=bounties)
 
-@app.route('/bounty/<key_name>', methods=['GET', 'POST'])
-def bounty(key_name):
-    b = Bounty.get_by_key_name(key_name)
+@app.route('/bounty/<int:id>', methods=['GET', 'POST'])
+def bounty(id):
+    b = Bounty.get_by_id(id)
+    if b.solved:
+        return "This bounty has already been solved."
     form = SolutionForm(request.form)
     form.bounty = b
     if request.method == 'POST' and form.validate():        
-        b.solved = True
-        b.solution = form.text.data
-        b.put()
-        send_message(b.email, "bounty_solved", bounty=b)
+        b.solve(solution=form.text.data, winner=form.address.data)
         return redirect(url_for('bounties'))
     
     return render_template('bounty.html', form=form, bounty=b)
+
+
+# --cronjobs
+@app.route('/bounty_address_watch')
+def bounty_address_watch():
+    s = ""
+    bounties = Bounty.all().filter('solved =', False).order('-ctime').fetch(1000)
+    for b in bounties:
+        # update the bounty's BTC budget
+        amount = b.update_budget()
+        s += "[%s] %s: %s/%s/%s BTC active=%s\n" % (
+          b.hash, b.address, amount, b.budget, b.bounty, b.active)
+          
+    # spawn more tasks
+    spawn = int(request.values.get("spawn", "0"))
+    if spawn:
+        for i in range(spawn):
+            countdown = int(60 / (spawn + 1))
+            taskqueue.add(url='/bounty_address_watch', countdown=countdown)
     
+    return "<pre>%s</pre>" % s
+
+@app.route('/claim_solved_bounties')
+def claim_solved_bounties():
+    bounties = Bounty.all().filter('solved =', True).filter(
+      'claimed =', False).order('-ctime').fetch(1000)
+    s = ""
+    for b in bounties:
+        amount = b.claim_bounty()
+        s += "[%s] %s: %s/%s BTC\n" % (b.hash, b.address, amount, b.budget)
+    return "<pre>%s</pre>" % s
+
 
 # --models
 from google.appengine.ext import db
@@ -55,14 +86,63 @@ class TimeMixin(db.Model):
     mtime = db.DateTimeProperty(auto_now=True)
 
 class Bounty(TimeMixin, db.Model):
-    type = db.StringProperty()
+    type = db.StringProperty() 
     hash = db.StringProperty()
     email = db.StringProperty()
     bounty = db.FloatProperty()
     address = db.StringProperty()
+    budget = db.FloatProperty(default=0.0)
+    active = db.BooleanProperty(default=False)
     
     solved = db.BooleanProperty(default=False)
     solution = db.StringProperty()
+    claimed = db.BooleanProperty(default=False)
+    winner = db.StringProperty(default=None)
+
+    @classmethod
+    def from_form(cls, form):
+        address = btc.connection.getnewaddress(settings.BITCOIN_ACCOUNT)
+        b = cls(
+          type=form.type.data,
+          hash=form.hash.data,
+          email=form.email.data,
+          bounty=form.bounty.data,
+          address=address,
+        )
+        return b
+
+    def update_budget(self):
+        amount = 0
+        budget = btc.connection.getreceivedbyaddress(self.address, minconf=0)
+        if self.budget != budget:
+            amount = budget - self.budget
+            logging.info("Bounty %s received %s BTC" % (self.hash, amount))
+            self.budget = budget
+            if self.budget >= self.bounty:
+                self.active = True
+            self.put()
+            send_message(self.email, "bitcoins_received", bounty=self, amount=amount)
+        return amount        
+
+    def solve(self, solution, winner):
+        self.active = False
+        self.solved = True
+        self.solution = solution
+        self.winner = winner
+        self.put()
+        send_message(self.email, "bounty_solved", bounty=self)
+
+    def claim_bounty(self):
+        if self.claimed:
+            raise Exception("Bounty already claimed!")        
+
+        amount = self.bounty
+        btc.connection.sendtoaddress(self.winner, amount)
+
+        self.claimed = True
+        self.put()
+
+        return amount
 
 # --forms
 from wtforms import Form, TextField, SelectField, FloatField, validators
