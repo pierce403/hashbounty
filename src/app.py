@@ -61,8 +61,8 @@ def bounty_address_watch():
     spawn = int(request.values.get("spawn", "0"))
     if spawn:
         for i in range(spawn):
-            countdown = int(60 / (spawn + 1))
-            taskqueue.add(url='/bounty_address_watch', countdown=countdown)
+            countdown = int(60 / (spawn + 1)) * (i+1)
+            taskqueue.add(url='/bounty_address_watch', countdown=countdown, method="GET")
     
     return "<pre>%s</pre>" % s
 
