@@ -48,7 +48,7 @@ def bounties():
 
     if cursor:
         query.with_cursor(cursor)
-    bounties = query.fetch(2)
+    bounties = query.fetch(24)
     cursor = query.cursor()
 
 

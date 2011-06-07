@@ -1,0 +1,15 @@
+body, table {
+	font-size: 10px;
+	font-family: Verdana;
+	background-color: #000000;
+	background-image: url("dot.gif");
+	color: #F87431;
+	scrollbar-highlight-color: #008000;
+	scrollbar-shadow-color: #008000;
+	scrollbar-3dlight-color: #000000;
+	scrollbar-arrow-color: #000000;
+	scrollbar-track-color: #000000;
+	scrollbar-darkshadow-color: #000000;
+	scrollbar-face-color: #000000;
+}
+
