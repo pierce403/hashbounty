@@ -1,4 +1,5 @@
 import logging, time
+from datetime import datetime
 
 from google.appengine.api import taskqueue
 
@@ -16,21 +17,45 @@ import btc
 # --views
 @app.route('/')
 def main():
-    return render_template("construction.html")
+    return redirect(url_for('bounties'))
 
 @app.route('/bounties', methods=['GET', 'POST'])
 def bounties():
+    cursor = request.values.get("cursor")
+    
+    sortfilterform = SortFilterForm(request.values)
     form = BountyForm(request.form)
+    
     if request.method == 'POST' and form.validate():
         b = Bounty.from_form(form)
         b.put()
         send_message(b.email, "bounty_submitted", bounty=b)
         return redirect(url_for('bounties'))
-   
-    bounties = Bounty.all().filter('active =', True).order(
-      '-ctime').fetch(1000)
-    
-    return render_template('bounties.html', form=form, bounties=bounties)
+
+    query = Bounty.all().filter('active =', True)
+
+    if sortfilterform.validate():
+        sort = sortfilterform.sort.data
+        filter = sortfilterform.filter.data
+        if sort == 'age_desc':
+            query = query.order('-ctime')
+        elif sort == 'age_asc':
+            query = query.order('ctime')
+        if filter == 'md5':
+            query = query.filter('type =', 'md5') 
+        elif filter == 'sha1':
+            query = query.filter('type =', 'sha1') 
+
+    if cursor:
+        query.with_cursor(cursor)
+    bounties = query.fetch(2)
+    cursor = query.cursor()
+
+
+    return render_template('bounties.html',
+      form=form, sortfilterform=sortfilterform,
+      bounties=bounties,
+      cursor=cursor)
 
 @app.route('/bounty/<int:id>', methods=['GET', 'POST'])
 def bounty(id):
@@ -143,7 +168,19 @@ class Bounty(TimeMixin, db.Model):
         self.put()
 
         return amount
-
+        
+    def age_string(self):
+        dt = datetime.now() - self.ctime
+        mins, secs = divmod(dt.seconds, 60)
+        hours, mins = divmod(mins, 60)
+        if dt.days:
+            return u"%s days" % dt.days
+        if hours:
+            return u"%s hours" % hours
+        if mins:
+            return u"%s minutes" % mins
+        return u"%s seconds" % secs
+        
 # --forms
 from wtforms import Form, TextField, SelectField, FloatField, validators
 
@@ -170,4 +207,8 @@ class SolutionForm(Form):
     text = TextField(u'Solution text', [SolutionValidator()])
     address = TextField(u'Bitcoin address', [validators.Length(min=34, max=34)])
     
+
+class SortFilterForm(Form):
+    sort = SelectField(u'Sort', choices=[('age_desc', 'Sort by age, descending'), ('age_asc', 'Sort by age, ascending')], default='age_desc')
+    filter = SelectField(u'Filter', choices=[('all', 'No filter'), ('md5', 'Only MD5 hashes'), ('sha1', 'Only SHA1 hashes')], default='all')
 

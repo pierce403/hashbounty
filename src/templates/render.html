@@ -1,0 +1,10 @@
+{% macro pagination(cursor, more=true, sort=none, filter=none) -%}
+    {% if more %}
+        {% if sort or filter %}
+        <a href="?sort={{ sort }}&filter={{ filter }}&cursor={{ cursor }}">more</a>
+        {% else %}
+        <a href="?cursor={{ cursor }}">more</a>
+        {% endif %}    
+    {% endif %}    
+{%- endmacro  %}
+

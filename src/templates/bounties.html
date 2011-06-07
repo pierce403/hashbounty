@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% from "_formhelpers.html" import render_field %}
+{% import "render.html" as render %}
 
 {% block body %}
 
@@ -25,19 +26,32 @@ still a work-in-progress...
 
 <h2>Bounties</h2>
 
-{% for bounty in bounties if not bounty.solved %}
+<form class="sortfilter" method="get" action="">
+    {{ sortfilterform.sort() }} |
+    {{ sortfilterform.filter() }}
+</form>
 
-  {{ bounty.hash }}
-  {% if bounty.solved %}
-  [SOLVED]
-  {% else %}
-  {{ bounty.bounty }} BTC
-  {% endif %}
-  
-  <a href="{{ url_for('bounty', id=bounty.key().id()) }}">submit solution<a/>
 
-  <br />
-
+<table>
+    <tr>
+        <th>hash</th>
+        <th>award</th>
+        <th>age</th>
+        <th>&nbsp;</th>
+    </tr>
+{% for bounty in bounties %}
+    <tr>
+        <td>{{ bounty.hash }}</td>
+        <td>{{ bounty.bounty }} BTC</td>
+        <td>{{ bounty.age_string() }}</td>
+        <td><a href="{{ url_for('bounty', id=bounty.key().id()) }}">submit solution<a/></td>
+    </tr>
 {% endfor %}
+    <tr>
+        <td colspan=4>
+        {{ render.pagination(cursor, more=true, sort=sortfilterform.sort.data, filter=sortfilterform.filter.data) }}
+        </td>
+    </tr>
+</table>
 
 {% endblock %}
