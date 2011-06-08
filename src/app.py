@@ -131,7 +131,7 @@ class Bounty(TimeMixin, db.Model):
           type=form.type.data,
           hash=form.hash.data,
           email=form.email.data,
-          bounty=form.bounty.data,
+          bounty=0.0, #form.bounty.data,
           address=address,
         )
         return b
@@ -143,8 +143,8 @@ class Bounty(TimeMixin, db.Model):
             amount = budget - self.budget
             logging.info("Bounty %s received %s BTC" % (self.hash, amount))
             self.budget = budget
-            if self.budget >= self.bounty:
-                self.active = True
+            self.bounty = budget
+            self.active = True
             self.put()
             send_message(self.email, "bitcoins_received", bounty=self, amount=amount)
         return amount        
@@ -180,6 +180,7 @@ class Bounty(TimeMixin, db.Model):
         if mins:
             return u"%s minutes" % mins
         return u"%s seconds" % secs
+
         
 # --forms
 from wtforms import Form, TextField, SelectField, FloatField, validators
@@ -188,7 +189,7 @@ class BountyForm(Form):
     type = SelectField(u'Hash type', choices=[('md5', 'MD5'), ('sha1', 'SHA1')])
     hash = TextField(u'Hash data', [validators.Length(min=1, max=1000)])
     email = TextField(u'Email Address', [validators.Length(min=6, max=35)])
-    bounty = FloatField(u'Bounty (BTC)')
+    #bounty = FloatField(u'Bounty (BTC)')
 
 
 class SolutionValidator(object):

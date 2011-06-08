@@ -13,3 +13,13 @@ body, table {
 	scrollbar-face-color: #000000;
 }
 
+a {
+    color: #ffe862;
+}
+
+input, select {
+    border-width: 1px;
+    border-color: #ffe862;
+    background: #32170a;
+    color: #ffe862;
+}
