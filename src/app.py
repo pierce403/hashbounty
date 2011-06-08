@@ -184,6 +184,7 @@ class Bounty(TimeMixin, db.Model):
         
 # --forms
 from wtforms import Form, TextField, SelectField, FloatField, validators
+from utils.bitcoin_address import AddressValidator
 
 class BountyForm(Form):
     type = SelectField(u'Hash type', choices=[('md5', 'MD5'), ('sha1', 'SHA1')])
@@ -206,7 +207,7 @@ class SolutionValidator(object):
 
 class SolutionForm(Form):
     text = TextField(u'Solution text', [SolutionValidator()])
-    address = TextField(u'Bitcoin address', [validators.Length(min=34, max=34)])
+    address = TextField(u'Bitcoin address', [AddressValidator()])
     
 
 class SortFilterForm(Form):
