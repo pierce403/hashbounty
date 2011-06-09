@@ -174,6 +174,13 @@ class Bounty(TimeMixin, db.Model):
             raise Exception("Bounty already claimed!")        
 
         amount = self.bounty
+
+        # verify budget to be sure
+        budget = btc.connection.getreceivedbyaddress(self.address, minconf=1)
+        if budget < amount:
+            raise Exception("Budget not yet confirmed, waiting for at least 1 confirmation.")        
+            
+
         btc.connection.sendtoaddress(self.winner, amount)
 
         self.claimed = True
