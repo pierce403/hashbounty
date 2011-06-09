@@ -1,8 +1,8 @@
 cron:
 - description: Bounty address watch
-  url: /bounty_address_watch?spawn=5
+  url: /jobs/bounty_address_watch?spawn=5
   schedule: every 1 minutes
 
 - description: Claim solved bounties
-  url: /claim_solved_bounties
+  url: /jobs/claim_solved_bounties
   schedule: every 1 minutes

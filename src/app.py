@@ -41,6 +41,10 @@ def bounties():
             query = query.order('-ctime')
         elif sort == 'age_asc':
             query = query.order('ctime')
+        elif sort == 'reward_desc':
+            query = query.order('-bounty')
+        elif sort == 'reward_asc':
+            query = query.order('bounty')
         if filter == 'md5':
             query = query.filter('type =', 'md5') 
         elif filter == 'sha1':
@@ -72,7 +76,7 @@ def bounty(id):
 
 
 # --cronjobs
-@app.route('/bounty_address_watch')
+@app.route('/jobs/bounty_address_watch')
 def bounty_address_watch():
     s = ""
     bounties = Bounty.all().filter('solved =', False).order('-ctime').fetch(1000)
@@ -91,14 +95,17 @@ def bounty_address_watch():
     
     return "<pre>%s</pre>" % s
 
-@app.route('/claim_solved_bounties')
+@app.route('/jobs/claim_solved_bounties')
 def claim_solved_bounties():
     bounties = Bounty.all().filter('solved =', True).filter(
       'claimed =', False).order('-ctime').fetch(1000)
     s = ""
     for b in bounties:
-        amount = b.claim_bounty()
-        s += "[%s] %s: %s/%s BTC\n" % (b.hash, b.address, amount, b.budget)
+        try:
+            amount = b.claim_bounty()
+            s += "[%s] %s: %s/%s BTC\n" % (b.hash, b.address, amount, b.budget)
+        except Exception, e:
+            logging.exception(b.address)
     return "<pre>%s</pre>" % s
 
 
@@ -138,7 +145,12 @@ class Bounty(TimeMixin, db.Model):
 
     def update_budget(self):
         amount = 0
-        budget = btc.connection.getreceivedbyaddress(self.address, minconf=0)
+        try:
+            budget = btc.connection.getreceivedbyaddress(self.address, minconf=0)
+        except Exception, e:
+            logging.exception(self.address)
+            return amount
+            
         if self.budget != budget:
             amount = budget - self.budget
             logging.info("Bounty %s received %s BTC" % (self.hash, amount))
@@ -211,6 +223,12 @@ class SolutionForm(Form):
     
 
 class SortFilterForm(Form):
-    sort = SelectField(u'Sort', choices=[('age_desc', 'Sort by age, descending'), ('age_asc', 'Sort by age, ascending')], default='age_desc')
+    sort = SelectField(u'Sort', choices=[
+        ('age_desc', 'Sort by age, descending'),
+        ('age_asc', 'Sort by age, ascending'),
+        ('reward_desc', 'Sort by reward, descending'),
+        ('reward_asc', 'Sort by reward, ascending'),
+        
+        ], default='age_desc')
     filter = SelectField(u'Filter', choices=[('all', 'No filter'), ('md5', 'Only MD5 hashes'), ('sha1', 'Only SHA1 hashes')], default='all')
 
