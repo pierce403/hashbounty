@@ -5,18 +5,11 @@ DEBUG = os.environ.get('SERVER_SOFTWARE', 'Dev').startswith('Dev')
 from google.appengine.ext import db
 class Settings(db.Expando):
     @classmethod
-    def get_settings(cls, name='default', **kwargs):
+    def get_settings(cls, name='default'):
         s = cls.get_by_key_name(name)
         if not s:
             s = cls(key_name=name)
-            s.put()
-        
-        if kwargs:
-            for k,v in kwargs.items():
-                if v is not None:
-                    setattr(s, k, v)
-            s.put()
-                
+            s.put()        
         return s
 
 
