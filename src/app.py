@@ -197,25 +197,13 @@ class Bounty(TimeMixin, db.Model):
 # --forms
 from wtforms import Form, TextField, SelectField, FloatField, validators
 from utils.bitcoin_address import AddressValidator
+from utils.hashutils import SolutionValidator, HashValidator
 
 class BountyForm(Form):
     type = SelectField(u'Hash type', choices=[('md5', 'MD5'), ('sha1', 'SHA1')])
-    hash = TextField(u'Hash data', [validators.Length(min=1, max=1000)])
+    hash = TextField(u'Hash data', [HashValidator()])
     email = TextField(u'Email Address', [validators.Length(min=6, max=35)])
     #bounty = FloatField(u'Bounty (BTC)')
-
-
-class SolutionValidator(object):
-    def __call__(self, form, field):
-        b = form.bounty
-        if b.type == 'md5':
-            import md5
-            if md5.md5(field.data).hexdigest() != b.hash:
-                raise validators.ValidationError(u'Bad solution.')
-        elif b.type == 'sha1':
-            import hashlib
-            if hashlib.sha1(field.data).hexdigest() != b.hash:
-                raise validators.ValidationError(u'Bad solution.')
 
 class SolutionForm(Form):
     text = TextField(u'Solution text', [SolutionValidator()])
